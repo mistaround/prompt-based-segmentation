@@ -1,0 +1,39 @@
+{
+  "model": "EfficientSAM3",
+  "variant": "TV-M (tinyvit/11m, RANDOM INIT -- no checkpoint)",
+  "n_images": 32,
+  "n_instances": 131,
+  "params_M": {
+    "total": 103.535,
+    "backbone": 70.79,
+    "geometry_encoder": 8.216,
+    "transformer": 21.048,
+    "segmentation_head": 2.299,
+    "dot_prod_scoring": 1.183
+  },
+  "accuracy": {
+    "_note": "not measured: random-initialized weights produce meaningless masks"
+  },
+  "latency": {
+    "encode_median_ms": 1488.5225825000816,
+    "encode_mean_ms": 1554.6215488749908,
+    "decode_median_ms": 1729.9277170000096,
+    "decode_mean_ms": 1767.9585801298008,
+    "images_per_s": 0.6718070735080334,
+    "encoder_only_1008": {
+      "median_ms": 1484.4110660001206,
+      "mean_ms": 1480.669938200026,
+      "p90_ms": 1566.9588920000024,
+      "min_ms": 1351.4830720000646
+    }
+  },
+  "peak_rss_mb": 2433.078125,
+  "env": {
+    "python": "3.10.20",
+    "platform": "Linux-6.18.44-fc-v21-x86_64-with-glibc2.39",
+    "processor": "x86_64"
+  },
+  "weights_available": false,
+  "encoder_gflops_1008": 321.838811136,
+  "checkpoint_mb": null
+}

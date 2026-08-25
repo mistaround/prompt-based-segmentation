@@ -110,10 +110,8 @@ def main() -> int:
     else:
         # Still walk the real images so encoder/decoder latency reflects the same
         # workload the other models were timed on.
-        result = benchmark(adapter, samples, do_point=False, do_boundary=False)
-        result["accuracy"] = {
-            "_note": "not measured: random-initialized weights produce meaningless masks"
-        }
+        result = benchmark(adapter, samples, do_point=False, do_boundary=False,
+                           report_accuracy=False)
 
     result["weights_available"] = adapter.has_weights
     result["encoder_gflops_1024"] = adapter.encoder_gflops()

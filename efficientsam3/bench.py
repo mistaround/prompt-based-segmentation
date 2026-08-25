@@ -138,10 +138,8 @@ def main() -> int:
     if adapter.has_weights:
         result = benchmark(adapter, samples)
     else:
-        result = benchmark(adapter, samples, do_point=False, do_boundary=False)
-        result["accuracy"] = {
-            "_note": "not measured: random-initialized weights produce meaningless masks"
-        }
+        result = benchmark(adapter, samples, do_point=False, do_boundary=False,
+                           report_accuracy=False)
 
     result["weights_available"] = adapter.has_weights
     result["encoder_gflops_1008"] = adapter.encoder_gflops()

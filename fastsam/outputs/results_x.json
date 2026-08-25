@@ -1,0 +1,55 @@
+{
+  "model": "FastSAM",
+  "variant": "FastSAM-x",
+  "n_images": 121,
+  "n_instances": 524,
+  "params_M": {
+    "total": 72.204,
+    "image_encoder": null,
+    "prompt_encoder": null,
+    "mask_decoder": null
+  },
+  "accuracy": {
+    "box_mIoU": 0.6452611335329019,
+    "box_median_IoU": 0.796027889875628,
+    "box_IoU@0.5": 0.7290076335877863,
+    "box_IoU@0.75": 0.5877862595419847,
+    "box_IoU@0.9": 0.1946564885496183,
+    "box_boundary_mIoU": 0.5520404914462705,
+    "point_mIoU": 0.5473752166439042,
+    "point_median_IoU": 0.7034905247357558,
+    "point_IoU@0.5": 0.6087786259541985,
+    "point_IoU@0.75": 0.4637404580152672,
+    "point_IoU@0.9": 0.14122137404580154,
+    "mIoU_medium": 0.624232521107928,
+    "n_medium": 296,
+    "mIoU_large": 0.6725614373828681,
+    "n_large": 228
+  },
+  "latency": {
+    "encode_median_ms": 1877.1357230000376,
+    "encode_mean_ms": 2032.9729348925694,
+    "decode_median_ms": 2.7090475000477454,
+    "decode_mean_ms": 2.6706816450415034,
+    "images_per_s": 0.5327265299718448,
+    "encoder_only_1024": {
+      "median_ms": 2514.826820000053,
+      "mean_ms": 2533.896278200018,
+      "p90_ms": 2625.442034100024,
+      "min_ms": 2436.4546110000447
+    }
+  },
+  "peak_rss_mb": 2787.2421875,
+  "env": {
+    "python": "3.10.20",
+    "platform": "Linux-6.18.44-fc-v21-x86_64-with-glibc2.39",
+    "processor": "x86_64"
+  },
+  "encoder_gflops_1024": 845.142966272,
+  "checkpoint_mb": 145.0,
+  "config": {
+    "imgsz": 1024,
+    "conf": 0.4,
+    "iou": 0.9
+  }
+}

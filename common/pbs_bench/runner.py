@@ -90,7 +90,15 @@ def benchmark(
     do_point: bool = True,
     do_boundary: bool = True,
     progress: bool = True,
+    report_accuracy: bool = True,
 ) -> Dict[str, object]:
+    """Run the protocol over `samples`.
+
+    `report_accuracy=False` is for a model whose checkpoint is unavailable: the
+    latency/params/memory columns are properties of the architecture and stay
+    valid under random initialization, but the IoUs are noise, so they are
+    neither printed nor written out.
+    """
     import cv2
 
     box_ious: List[float] = []
@@ -127,10 +135,12 @@ def benchmark(
                 point_ious.append(mask_iou(pred_p, inst.mask))
 
         if progress and (idx + 1) % 20 == 0:
+            running = (
+                f", running box mIoU={np.mean(box_ious):.4f}" if report_accuracy else ""
+            )
             print(
                 f"  [{adapter.name}] {idx + 1}/{len(samples)} images, "
-                f"{n_instances} instances, running box mIoU="
-                f"{np.mean(box_ious):.4f}",
+                f"{n_instances} instances{running}",
                 flush=True,
             )
 
@@ -140,12 +150,19 @@ def benchmark(
         "n_images": len(encode_ms),
         "n_instances": n_instances,
         "params_M": adapter.param_stats(),
-        "accuracy": {
-            **summarize(box_ious, prefix="box_"),
-            **({"box_boundary_mIoU": float(np.mean(box_biou))} if box_biou else {}),
-            **(summarize(point_ious, prefix="point_") if point_ious else {}),
-            **by_size_bucket(box_ious, areas),
-        },
+        "accuracy": (
+            {
+                **summarize(box_ious, prefix="box_"),
+                **({"box_boundary_mIoU": float(np.mean(box_biou))} if box_biou else {}),
+                **(summarize(point_ious, prefix="point_") if point_ious else {}),
+                **by_size_bucket(box_ious, areas),
+            }
+            if report_accuracy
+            else {
+                "_note": "not measured: random-initialized weights produce "
+                         "meaningless masks"
+            }
+        ),
         "latency": {
             "encode_median_ms": float(np.median(encode_ms)) if encode_ms else None,
             "encode_mean_ms": float(np.mean(encode_ms)) if encode_ms else None,

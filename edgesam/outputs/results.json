@@ -1,0 +1,37 @@
+{
+  "model": "EdgeSAM",
+  "variant": "RepViT-M1 (RANDOM INIT -- no checkpoint)",
+  "n_images": 121,
+  "n_instances": 524,
+  "params_M": {
+    "total": 9.582,
+    "image_encoder": 5.518,
+    "prompt_encoder": 0.006,
+    "mask_decoder": 4.058
+  },
+  "accuracy": {
+    "_note": "not measured: random-initialized weights produce meaningless masks"
+  },
+  "latency": {
+    "encode_median_ms": 371.01862899999105,
+    "encode_mean_ms": 372.19938809091053,
+    "decode_median_ms": 43.28960249995362,
+    "decode_mean_ms": 43.64095232442877,
+    "images_per_s": 2.695282451706823,
+    "encoder_only_1024": {
+      "median_ms": 361.47506300005716,
+      "mean_ms": 363.8858793999816,
+      "p90_ms": 380.0570419000451,
+      "min_ms": 341.4096229998904
+    }
+  },
+  "peak_rss_mb": 1298.5234375,
+  "env": {
+    "python": "3.10.20",
+    "platform": "Linux-6.18.44-fc-v21-x86_64-with-glibc2.39",
+    "processor": "x86_64"
+  },
+  "weights_available": false,
+  "encoder_gflops_1024": 40.09127936,
+  "checkpoint_mb": null
+}
