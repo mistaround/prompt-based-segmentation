@@ -11,6 +11,9 @@ fi
 git -C repo fetch --depth 1 origin "$REPO_SHA" 2>/dev/null || true
 git -C repo checkout -q "$REPO_SHA"
 
+# Source-level fixes for modern torch/matplotlib/setuptools (idempotent).
+python3 patches/apply_patches.py
+
 mkdir -p weights
 # Upstream README links Google Drive; the ultralytics asset mirror is the same
 # YOLOv8x/YOLOv8s-seg FastSAM checkpoints and is scriptable.
