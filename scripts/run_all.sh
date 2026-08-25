@@ -20,7 +20,7 @@ run fastsam   "FastSAM-x"                  --model weights/FastSAM-x.pt --out ou
 run fastsam   "FastSAM-s"                  --model weights/FastSAM-s.pt --out outputs/results_s.json
 run mobilesam "MobileSAM (TinyViT)"
 run edgesam   "EdgeSAM (RepViT-M1)"
-# EfficientSAM3 has no checkpoint here, so accuracy is not measurable; 32 images
-# is plenty for a stable median latency and keeps the run to a few minutes.
-run efficientsam3 "EfficientSAM3 TV-M"     --backbone tinyvit --max-images 32
+# EfficientSAM3 runs the full set like the others. Its decoder is ~40x slower
+# per prompt than the SAM-style models, so this stage dominates the wall clock.
+run efficientsam3 "EfficientSAM3 TV-M"     --backbone tinyvit
 echo "All runs complete."

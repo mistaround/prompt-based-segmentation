@@ -29,7 +29,7 @@ EfficientSAM3 压缩的是 **SAM3**（可提示概念分割 PCS：**文本提示
 注意 **文本编码器 42.5M 比视觉编码器还大**——这是"概念分割"路线的代价，
 前三个模型完全没有这部分。
 
-## ⚠️ 权重在本环境拿不到
+## 权重
 
 Stage-3 checkpoint 只发布在 HuggingFace：
 
@@ -39,11 +39,14 @@ https://huggingface.co/Simon7108528/EfficientSAM3/resolve/main/efficientsam3_ft/
 https://huggingface.co/Simon7108528/EfficientSAM3/resolve/main/efficientsam3_ft/efficientsam3_efficientvit.pt
 ```
 
-本会话出网策略封了 `huggingface.co`，因此**不报精度数字**。
-`bench.py` 在无权重时只报与权重数值无关的指标（参数量 / GFLOPs / 时延 / 峰值内存），
-结果 JSON 里标 `weights_available: false`。把 `.pt` 放进 `weights/` 后重跑即自动切换到完整评测。
+每个约 470 MB。`setup.sh` 默认只下 tinyvit（TV-M），要别的变体就传名字：
+`./setup.sh efficientsam3_repvit`。
 
-好消息是**建结构完全不需要联网**（BPE 词表随仓库分发），所以结构级指标是实测的，不是抄的。
+若网络不通 HF，手动下好放进 `weights/` 即可——`bench.py` 会自动检测，
+检测不到时只报与权重数值无关的指标，并写 `weights_available: false`。
+
+另外，**建结构完全不需要联网**（BPE 词表随仓库分发），所以即使没有权重，
+结构级指标也是实测的，不是抄的。
 
 ## 装 / 跑
 

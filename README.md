@@ -6,15 +6,17 @@
 |---|---|---|---|
 | [FastSAM](fastsam/NOTES.md) | CASIA-IVA-Lab | 2023 | ✅ 跑通，精度+性能全测 |
 | [MobileSAM](mobilesam/NOTES.md) | Kyung Hee University | 2023 | ✅ 跑通，精度+性能全测 |
-| [EdgeSAM](edgesam/NOTES.md) | NTU S-Lab | 2023 / IJCV 2025 | ⚠️ 跑通，权重被出网策略挡住，只有性能指标 |
-| [EfficientSAM3](efficientsam3/NOTES.md) | Bristol / UvA / Edinburgh / SMU | 2025 | ⚠️ 跑通，权重被出网策略挡住，只有性能指标 |
+| [EdgeSAM](edgesam/NOTES.md) | NTU S-Lab | 2023 / IJCV 2025 | ✅ 跑通，精度+性能全测 |
+| [EfficientSAM3](efficientsam3/NOTES.md) | Bristol / UvA / Edinburgh / SMU | 2025 | ✅ 跑通，精度+性能全测 |
 
-**权重缺失的说明**：EdgeSAM 和 EfficientSAM3 的 checkpoint 只发布在 HuggingFace 上，
-而本环境的出网策略封了 `huggingface.co`（详见 [EXPERIENCE.md 第 0 节](docs/EXPERIENCE.md)）。
-代码侧两者都已完全跑通——能 import、能建模型、能跑前向、能接受提示。
-`bench.py` 在无权重时只报**与权重数值无关**的指标（参数量 / GFLOPs / 时延 / 峰值内存），
+四个模型都已完整评测。各模型的 `setup.sh` 会自动拉取权重
+（FastSAM 走 ultralytics 的 GitHub release 资产，MobileSAM 的权重在上游仓库里，
+EdgeSAM 与 EfficientSAM3 走 HuggingFace）。
+
+`bench.py` 是 weights-optional 的：检测不到 `weights/` 下的 checkpoint 时，
+只报**与权重数值无关**的指标（参数量 / GFLOPs / 时延 / 峰值内存），
 并在结果 JSON 里标 `weights_available: false`，**不会**用随机权重的 IoU 充数。
-把权重放进对应的 `weights/` 目录重跑即可自动切换到完整评测，代码无需改动。
+所以在拿不到某个权重的环境里，这套评测依然能跑出有意义的一半结果。
 
 ## 文档
 

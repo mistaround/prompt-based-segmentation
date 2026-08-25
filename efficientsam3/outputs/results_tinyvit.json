@@ -1,8 +1,8 @@
 {
   "model": "EfficientSAM3",
-  "variant": "TV-M (tinyvit/11m, RANDOM INIT -- no checkpoint)",
-  "n_images": 32,
-  "n_instances": 131,
+  "variant": "TV-M (tinyvit/11m, efficientsam3_tinyvit.pt)",
+  "n_images": 121,
+  "n_instances": 524,
   "params_M": {
     "total": 103.535,
     "backbone": 70.79,
@@ -12,28 +12,42 @@
     "dot_prod_scoring": 1.183
   },
   "accuracy": {
-    "_note": "not measured: random-initialized weights produce meaningless masks"
+    "box_mIoU": 0.7088780064087682,
+    "box_median_IoU": 0.8009177239322249,
+    "box_IoU@0.5": 0.8358778625954199,
+    "box_IoU@0.75": 0.6183206106870229,
+    "box_IoU@0.9": 0.16221374045801526,
+    "box_boundary_mIoU": 0.6076542760095788,
+    "point_mIoU": 0.570867136669717,
+    "point_median_IoU": 0.7064986943326981,
+    "point_IoU@0.5": 0.6679389312977099,
+    "point_IoU@0.75": 0.4389312977099237,
+    "point_IoU@0.9": 0.09351145038167939,
+    "mIoU_medium": 0.7039707101470153,
+    "n_medium": 296,
+    "mIoU_large": 0.7152488822573597,
+    "n_large": 228
   },
   "latency": {
-    "encode_median_ms": 1488.5225825000816,
-    "encode_mean_ms": 1554.6215488749908,
-    "decode_median_ms": 1729.9277170000096,
-    "decode_mean_ms": 1767.9585801298008,
-    "images_per_s": 0.6718070735080334,
+    "encode_median_ms": 1680.989400000044,
+    "encode_mean_ms": 1709.3408855041503,
+    "decode_median_ms": 1808.0910725000194,
+    "decode_mean_ms": 1832.12171794656,
+    "images_per_s": 0.5948877488459914,
     "encoder_only_1008": {
-      "median_ms": 1484.4110660001206,
-      "mean_ms": 1480.669938200026,
-      "p90_ms": 1566.9588920000024,
-      "min_ms": 1351.4830720000646
+      "median_ms": 1775.451342999986,
+      "mean_ms": 1836.5788694000003,
+      "p90_ms": 2027.0812343998841,
+      "min_ms": 1587.6836520001234
     }
   },
-  "peak_rss_mb": 2433.078125,
+  "peak_rss_mb": 2372.9140625,
   "env": {
     "python": "3.10.20",
     "platform": "Linux-6.18.44-fc-v21-x86_64-with-glibc2.39",
     "processor": "x86_64"
   },
-  "weights_available": false,
+  "weights_available": true,
   "encoder_gflops_1008": 321.838811136,
-  "checkpoint_mb": null
+  "checkpoint_mb": 492.8
 }

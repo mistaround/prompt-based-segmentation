@@ -31,6 +31,18 @@ def _import_mmdet():
     return RPNHead, CenterNetUpdateHead, FPN, ConfigDict, efficientdet""",
         "Make mmdet/mmengine imports lazy so inference does not need an mmcv build.",
     ),
+    (
+        "edge_sam/build_sam.py",
+        """            with open(checkpoint, "rb") as f:
+                state_dict = torch.load(f)""",
+        """            with open(checkpoint, "rb") as f:
+                # The released edge_sam / edge_sam_3x checkpoints were saved from
+                # CUDA tensors, so loading them on a CPU-only box fails without an
+                # explicit map_location. Harmless on a GPU machine -- the model is
+                # moved to its device by the caller afterwards.
+                state_dict = torch.load(f, map_location="cpu")""",
+        "Load the CUDA-saved checkpoints on a CPU-only machine.",
+    ),
 ]
 
 # Every site that actually dereferences one of the lazily-imported names has to

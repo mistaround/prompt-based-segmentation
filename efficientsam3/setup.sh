@@ -12,11 +12,15 @@ git -C repo fetch --depth 1 origin "$REPO_SHA" 2>/dev/null || true
 git -C repo checkout -q "$REPO_SHA"
 
 mkdir -p weights
-# Checkpoints are published only on HuggingFace. This session's egress policy
-# blocks huggingface.co, so fetch them wherever you run this and drop the .pt
-# files into weights/. See ../docs/EXPERIENCE.md.
-for f in efficientsam3_efficientvit efficientsam3_repvit efficientsam3_tinyvit; do
-  [ -f "weights/$f.pt" ] || echo "MISSING weights/$f.pt -> https://huggingface.co/Simon7108528/EfficientSAM3/resolve/main/efficientsam3_ft/$f.pt"
+# Stage-3 checkpoints are published only on HuggingFace. Each is ~470 MB, so
+# only the default (tinyvit / TV-M) is fetched here; pass another name to grab
+# the others. If your network blocks huggingface.co, fetch them elsewhere and
+# drop the .pt files into weights/ -- bench.py detects them.
+HF=https://huggingface.co/Simon7108528/EfficientSAM3/resolve/main/efficientsam3_ft
+for f in "${@:-efficientsam3_tinyvit}"; do
+  [ -f "weights/$f.pt" ] && continue
+  curl -fL --retry 3 -o "weights/$f.pt" "$HF/$f.pt" \
+    || { rm -f "weights/$f.pt"; echo "WARN: could not fetch $f.pt from $HF"; }
 done
 
 uv sync

@@ -9,7 +9,14 @@
 
 ## 0. 最先要确认的：出网策略
 
-这一条排第一，因为它决定了后面所有方案的可行性。本会话的 egress proxy 只放行：
+这一条排第一，因为它决定了后面所有方案的可行性。
+
+> **更新**：本次调研中途 `huggingface.co` 及其 CDN（`us.aws.cdn.hf.co`）已被放行，
+> EdgeSAM 与 EfficientSAM3 的权重已成功下载，**四个模型现在都有完整精度数字**。
+> 下面这张表保留的是最初的状态，因为由它推导出的几个设计决定（统一 torch 版本、
+> 改用 coco128-seg、weights-optional 的评测脚本）仍然是当前代码的形态。
+
+最初的 egress proxy 只放行：
 
 | 可达 | 被封（CONNECT 返回 403） |
 |---|---|
@@ -27,15 +34,17 @@ curl -sS "$HTTPS_PROXY/__agentproxy/status"     # 会列出最近的 connect_rej
 
 直接后果，按影响排序：
 
-1. **EdgeSAM 和 EfficientSAM3 的权重只发布在 HuggingFace 上**，因此这两个模型在本环境里无法测精度。
-   已经确认没有替代镜像：PyPI 上没有 `edge-sam` / `efficientsam3` 包，
+1. **EdgeSAM 和 EfficientSAM3 的权重只发布在 HuggingFace 上**（已解决，见上方更新）。
+   当时确认过没有替代镜像：PyPI 上没有 `edge-sam` / `efficientsam3` 包，
    `ultralytics/assets` release 里也只有 `mobile_sam.pt` / `sam_b.pt` / `FastSAM-*.pt`，没有 `edge_sam*.pth`。
+   **教训**：放行 HF 时只加 `huggingface.co` 不够——`resolve/main/...` 会 302 跳到
+   CDN 域名（本次是 `us.aws.cdn.hf.co`），CDN 不放行的话握手能过但文件仍然拉不下来。
 2. **拿不到 `+cpu` 版 torch**（那只在 `download.pytorch.org` 上）。只能装 PyPI 上的默认 Linux wheel，
    它会连带拉进 `nvidia-*` 一堆 CUDA 运行时，单个环境约 5 GB —— 在没有 GPU 的机器上这些完全用不到。
 3. **COCO val2017 下不了**，所以统一测试集改用 `coco128-seg`（见第 5 节）。
 
-> 如果要在能连 HF 的机器上复现完整精度，只需把权重放进各自的 `weights/` 目录，
-> 所有 `bench.py` 会自动检测到并切换成完整评测，无需改代码。
+> `bench.py` 全程设计成 weights-optional：检测到 `weights/` 下有 checkpoint 就跑完整评测，
+> 没有就只报与权重无关的指标。所以权重到位后**一行代码都没改**，直接重跑即可。
 
 ---
 
@@ -195,7 +204,25 @@ def predict(self, features=None, point_coords=None, point_labels=None,
 2. **是 `num_multimask_outputs: int`（可选 1/3/4），不是 SAM 的 `multimask_output: bool`**。
    传 `multimask_output=False` 会直接 `TypeError`。box 提示对应 `num_multimask_outputs=1`。
 
-### 4.3 权重缺失下仍然可测的部分
+### 4.3 权重是用 CUDA 存的，CPU 机器直接加载会崩
+
+拿到权重后立刻踩到的第二个坑：
+
+```
+RuntimeError: Attempting to deserialize object on a CUDA device
+but torch.cuda.is_available() is False.
+```
+
+`build_sam.py` 里是 `torch.load(f)`，没给 `map_location`，
+而官方发布的 `edge_sam.pth` / `edge_sam_3x.pth` 是从 CUDA 张量存下来的。
+补丁改成 `torch.load(f, map_location="cpu")` 即可，在 GPU 机器上也无副作用
+（模型随后由调用方 `.to(device)`）。
+
+对照：**MobileSAM 和 EfficientSAM3 的权重都没有这个问题**——
+前者存的是 CPU state_dict，后者的 builder 自己传了 `map_location`。
+这类问题只有真正拿到权重才会暴露，光看代码看不出来。
+
+### 4.4 权重缺失下仍然可测的部分
 
 参数量、GFLOPs、encoder/decoder 时延、峰值内存 **只取决于网络结构，不取决于权重数值**，
 所以随机初始化下这些指标全部有效。只有精度不行。`bench.py` 因此设计成 weights-optional，
@@ -326,11 +353,12 @@ cd efficientsam3 && ./setup.sh && cd ..
 python3 scripts/aggregate.py
 ```
 
-如果所在环境能访问 HuggingFace，补上这两个模型的权重就能拿到完整精度：
+各模型的 `setup.sh` 会自动下载权重。若网络不通 HuggingFace，
+手动下好放进对应的 `weights/` 目录即可，`bench.py` 会自动检测：
 
 ```bash
-wget -P edgesam/weights/ https://huggingface.co/spaces/chongzhou/EdgeSAM/resolve/main/weights/edge_sam_3x.pth
-wget -P efficientsam3/weights/ https://huggingface.co/Simon7108528/EfficientSAM3/resolve/main/efficientsam3_ft/efficientsam3_tinyvit.pt
+# EdgeSAM (38 MB each)
+https://huggingface.co/spaces/chongzhou/EdgeSAM/resolve/main/weights/edge_sam_3x.pth
+# EfficientSAM3 (470 MB)
+https://huggingface.co/Simon7108528/EfficientSAM3/resolve/main/efficientsam3_ft/efficientsam3_tinyvit.pt
 ```
-
-放进去后重跑 `scripts/run_all.sh` 即可，`bench.py` 会自动检测并切换到完整评测模式。

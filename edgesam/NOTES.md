@@ -15,29 +15,38 @@
 这是它和 MobileSAM 的核心区别：MobileSAM 只对齐编码器输出，EdgeSAM 对齐的是最终的提示-响应行为。
 论文报告 COCO mAP 42.7（EdgeSAM-3x）对 SAM 的 46.1，是第一个在 iPhone 14 上跑到 30+ FPS 的 SAM 变体。
 
-**本环境实测**：编码器 395 ms/图，比 MobileSAM 的 2112 ms 快约 5×（纯 CPU）。
-CNN 对 ViT 的这个优势和论文的说法一致。参数量 9.58M（编码器 5.4M + 解码器 4.1M）。
+**本环境实测**（edge_sam_3x，121 图 / 524 实例，纯 CPU）：
 
-## ⚠️ 权重在本环境拿不到
+| | EdgeSAM | MobileSAM |
+|---|---|---|
+| box mIoU | **0.7801** | 0.7664 |
+| boundary mIoU | **0.6770** | 0.6589 |
+| point mIoU | 0.5174 | **0.5676** |
+| 编码器时延 | **379 ms** | 905 ms |
+| 参数 | **9.58M** | 10.13M |
+| 编码器 GFLOPs | **40.1** | 77.5 |
 
-官方 checkpoint 只发布在 HuggingFace Space 上，而本会话出网策略封了 `huggingface.co`：
+**框提示上 EdgeSAM 以更小、更快的模型胜过 MobileSAM**，方向与论文一致（论文报 COCO AP 高 2.8）。
+
+但**点提示这一项它反而更低**（0.5174 vs 0.5676），和论文的说法不一致。
+本协议下单点提示取 `num_multimask_outputs=3` 再按模型自报的 IoU 分数选最优，
+所以这项同时考验分数头的标定质量；论文的点提示协议未必相同。
+样本量也只有 524 个实例。**这一条按实测如实记录，不宜据此下结论。**
+
+## 权重
+
+官方 checkpoint 只发布在 HuggingFace Space（无 GitHub release、无 PyPI 包、无镜像）：
 
 ```
 https://huggingface.co/spaces/chongzhou/EdgeSAM/resolve/main/weights/edge_sam.pth      # 42.1 COCO mAP
 https://huggingface.co/spaces/chongzhou/EdgeSAM/resolve/main/weights/edge_sam_3x.pth   # 42.7 COCO mAP
 ```
 
-已确认没有替代来源：PyPI 上没有 `edge-sam` 包，GitHub 上无 release 资产，
-`ultralytics/assets` 里也没有（只有 `mobile_sam.pt` / `sam_b.pt` / `FastSAM-*`）。
+`setup.sh` 会自动下载（各 38 MB）。`bench.py` 默认优先用 `edge_sam_3x.pth`。
 
-**因此本目录不报精度数字。** `bench.py` 在检测不到权重时会：
-
-- 打印警告，并在结果 JSON 里写 `weights_available: false`
-- 只报**与权重数值无关**的指标：参数量、GFLOPs、编码器/解码器时延、峰值内存
-  （这些只取决于网络结构，随机初始化下同样成立）
-- **不** 输出任何 IoU —— 随机权重的 IoU 是噪声，不能拿来充数
-
-把 `.pth` 放进 `weights/` 后重跑，会自动切换到完整评测，代码无需改动。
+若网络不通 HF，手动下好放进 `weights/` 即可——`bench.py` 会自动检测，
+检测不到时只报与权重数值无关的指标（参数量 / GFLOPs / 时延 / 峰值内存），
+并在结果 JSON 里写 `weights_available: false`，**不会用随机权重的 IoU 充数**。
 
 ## 装 / 跑
 
@@ -47,7 +56,7 @@ uv run python bench.py                                  # 自动探测 weights/ 
 uv run python bench.py --checkpoint weights/edge_sam_3x.pth
 ```
 
-## 最大的坑：模块级 import mmdet
+## 坑 1（最大的）：模块级 import mmdet
 
 `edge_sam/modeling/sam.py` 在模块顶层无条件 import 了 mmdet / mmengine / `projects.EfficientDet`，
 所以 **`import edge_sam` 直接崩**，哪怕只想跑推理。
@@ -61,7 +70,22 @@ uv run python bench.py --checkpoint weights/edge_sam_3x.pth
 
 改完 `import edge_sam` 干净通过，**完全不需要 mmcv**。
 
-## `predict()` 签名和 SAM 不一样 —— 别用位置参数
+## 坑 2：权重是用 CUDA 存的
+
+`build_sam.py` 里是 `torch.load(f)`，没给 `map_location`，
+而官方发布的 `.pth` 是从 CUDA 张量存下来的，所以在 CPU 机器上直接崩：
+
+```
+RuntimeError: Attempting to deserialize object on a CUDA device
+but torch.cuda.is_available() is False.
+```
+
+补丁改成 `torch.load(f, map_location="cpu")`，GPU 机器上也无副作用
+（模型随后由调用方 `.to(device)`）。
+
+对照：MobileSAM 和 EfficientSAM3 都没有这个问题。**这类坑只有真正拿到权重才会暴露。**
+
+## 坑 3：`predict()` 签名和 SAM 不一样 —— 别用位置参数
 
 ```python
 def predict(self, features=None, point_coords=None, point_labels=None,

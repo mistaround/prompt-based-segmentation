@@ -15,11 +15,14 @@ git -C repo checkout -q "$REPO_SHA"
 python3 patches/apply_patches.py
 
 mkdir -p weights
-# Checkpoints are published only on HuggingFace. This session's egress policy
-# blocks huggingface.co, so fetch them wherever you run this and drop the .pth
-# files into weights/. See ../docs/EXPERIENCE.md.
+# Checkpoints are published only on HuggingFace (no GitHub release, no PyPI
+# package, no mirror). If your network blocks huggingface.co, fetch them
+# elsewhere and drop the .pth files into weights/ -- bench.py detects them.
+HF=https://huggingface.co/spaces/chongzhou/EdgeSAM/resolve/main/weights
 for f in edge_sam edge_sam_3x; do
-  [ -f "weights/$f.pth" ] || echo "MISSING weights/$f.pth -> https://huggingface.co/spaces/chongzhou/EdgeSAM/resolve/main/weights/$f.pth"
+  [ -f "weights/$f.pth" ] && continue
+  curl -fL --retry 3 -o "weights/$f.pth" "$HF/$f.pth" \
+    || { rm -f "weights/$f.pth"; echo "WARN: could not fetch $f.pth from $HF"; }
 done
 
 uv sync

@@ -1,6 +1,6 @@
 {
   "model": "EdgeSAM",
-  "variant": "RepViT-M1 (RANDOM INIT -- no checkpoint)",
+  "variant": "RepViT-M1 (edge_sam_3x.pth)",
   "n_images": 121,
   "n_instances": 524,
   "params_M": {
@@ -10,28 +10,42 @@
     "mask_decoder": 4.058
   },
   "accuracy": {
-    "_note": "not measured: random-initialized weights produce meaningless masks"
+    "box_mIoU": 0.7801181980927517,
+    "box_median_IoU": 0.8278639968997747,
+    "box_IoU@0.5": 0.9236641221374046,
+    "box_IoU@0.75": 0.700381679389313,
+    "box_IoU@0.9": 0.22328244274809161,
+    "box_boundary_mIoU": 0.676985808699163,
+    "point_mIoU": 0.5174147721982643,
+    "point_median_IoU": 0.5182646321074584,
+    "point_IoU@0.5": 0.5152671755725191,
+    "point_IoU@0.75": 0.2786259541984733,
+    "point_IoU@0.9": 0.05916030534351145,
+    "mIoU_medium": 0.7766203858485018,
+    "n_medium": 296,
+    "mIoU_large": 0.7846592174975671,
+    "n_large": 228
   },
   "latency": {
-    "encode_median_ms": 371.01862899999105,
-    "encode_mean_ms": 372.19938809091053,
-    "decode_median_ms": 43.28960249995362,
-    "decode_mean_ms": 43.64095232442877,
-    "images_per_s": 2.695282451706823,
+    "encode_median_ms": 378.9706469999601,
+    "encode_mean_ms": 389.1692298099191,
+    "decode_median_ms": 44.089534999898206,
+    "decode_mean_ms": 46.05694040458448,
+    "images_per_s": 2.638726793001742,
     "encoder_only_1024": {
-      "median_ms": 361.47506300005716,
-      "mean_ms": 363.8858793999816,
-      "p90_ms": 380.0570419000451,
-      "min_ms": 341.4096229998904
+      "median_ms": 370.1479379999455,
+      "mean_ms": 380.1119027999903,
+      "p90_ms": 405.2431682999668,
+      "min_ms": 359.38651100013885
     }
   },
-  "peak_rss_mb": 1298.5234375,
+  "peak_rss_mb": 1105.38671875,
   "env": {
     "python": "3.10.20",
     "platform": "Linux-6.18.44-fc-v21-x86_64-with-glibc2.39",
     "processor": "x86_64"
   },
-  "weights_available": false,
+  "weights_available": true,
   "encoder_gflops_1024": 40.09127936,
-  "checkpoint_mb": null
+  "checkpoint_mb": 38.8
 }
