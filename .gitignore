@@ -1,0 +1,14 @@
+# Upstream clones are pinned + fetched by each model's setup.sh, not vendored here.
+*/repo/
+# Model weights (hundreds of MB)
+*/weights/
+# uv environments & caches
+.venv/
+*/.venv/
+__pycache__/
+*.pyc
+# Benchmark scratch output
+outputs/
+*/outputs/
+# Benchmark dataset (fetched by scripts/get_dataset.sh)
+datasets/

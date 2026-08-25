@@ -1,0 +1,18 @@
+[project]
+name = "pbs-mobilesam"
+version = "0.1.0"
+description = "MobileSAM (Kyung Hee University, 2023) - SAM with a TinyViT image encoder"
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "numpy<2",
+    "torch==2.13.0",
+    "torchvision",
+    "timm>=0.9",
+    "opencv-python-headless>=4.6",
+    "pillow>=9",
+    "matplotlib>=3.5",
+    "pycocotools>=2.0.6",
+]
+
+[tool.uv]
+package = false

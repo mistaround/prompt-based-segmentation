@@ -1,0 +1,22 @@
+[project]
+name = "pbs-edgesam"
+version = "0.1.0"
+description = "EdgeSAM (NTU S-Lab, 2023 / IJCV 2025) - RepViT encoder distilled from SAM with prompt-in-the-loop"
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "numpy<2",
+    "torch==2.13.0",
+    "torchvision",
+    "timm>=0.9",
+    "yacs>=0.1.8",
+    "kornia>=0.7",
+    "loralib>=0.1.2",
+    "opencv-python-headless>=4.6",
+    "pillow>=9",
+    "matplotlib>=3.5",
+    "pycocotools>=2.0.6",
+    "onnxruntime>=1.16",
+]
+
+[tool.uv]
+package = false
