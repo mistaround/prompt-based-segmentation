@@ -13,5 +13,6 @@ __pycache__/
 !*/outputs/*.json
 !*/outputs/demo_*.jpg
 !*/outputs/everything_*.jpg
+!*/outputs/text_*.jpg
 # Benchmark dataset (fetched by scripts/get_dataset.sh)
 datasets/
