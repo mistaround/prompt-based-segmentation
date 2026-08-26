@@ -1,0 +1,51 @@
+{
+  "model": "EfficientSAM",
+  "variant": "S (efficient_sam_vits.pt)",
+  "n_images": 121,
+  "n_instances": 524,
+  "params_M": {
+    "total": 26.413,
+    "image_encoder": 22.354,
+    "prompt_encoder": 0.001,
+    "mask_decoder": 4.058
+  },
+  "accuracy": {
+    "box_mIoU": 0.7793303610597923,
+    "box_median_IoU": 0.8345030334322964,
+    "box_IoU@0.5": 0.9141221374045801,
+    "box_IoU@0.75": 0.7385496183206107,
+    "box_IoU@0.9": 0.2099236641221374,
+    "box_boundary_mIoU": 0.6738905379796902,
+    "point_mIoU": 0.5887981230741862,
+    "point_median_IoU": 0.6817751491172157,
+    "point_IoU@0.5": 0.6393129770992366,
+    "point_IoU@0.75": 0.4217557251908397,
+    "point_IoU@0.9": 0.10687022900763359,
+    "mIoU_medium": 0.7699645344826603,
+    "n_medium": 296,
+    "mIoU_large": 0.791489504335367,
+    "n_large": 228
+  },
+  "latency": {
+    "encode_median_ms": 8064.008898999873,
+    "encode_mean_ms": 8270.159224074378,
+    "decode_median_ms": 61.1525280000933,
+    "decode_mean_ms": 63.155320576348835,
+    "images_per_s": 0.12400779965954943,
+    "encoder_only_1024": {
+      "median_ms": 7665.379620500062,
+      "mean_ms": 7946.266931599984,
+      "p90_ms": 8837.543216399717,
+      "min_ms": 7324.239452000256
+    }
+  },
+  "peak_rss_mb": 1685.17578125,
+  "env": {
+    "python": "3.10.20",
+    "platform": "Linux-6.18.44-fc-v21-x86_64-with-glibc2.39",
+    "processor": "x86_64"
+  },
+  "weights_available": true,
+  "encoder_gflops_1024": 491.23688448,
+  "checkpoint_mb": 105.7
+}

@@ -1,0 +1,17 @@
+{
+  "model": "EfficientSAM",
+  "variant": "S (efficient_sam_vits.pt)",
+  "encoder_input": 1024,
+  "encode": {
+    "median_ms": 8324.38573599984,
+    "mean_ms": 8533.480294499592,
+    "p90_ms": 9614.458822999495,
+    "min_ms": 7473.84069599957
+  },
+  "decode": {
+    "median_ms": 79.9948409994613,
+    "mean_ms": 81.74537804006832,
+    "p90_ms": 86.59340960002737,
+    "min_ms": 75.69736999994348
+  }
+}

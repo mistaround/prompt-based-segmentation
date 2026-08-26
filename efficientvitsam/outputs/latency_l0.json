@@ -1,0 +1,17 @@
+{
+  "model": "EfficientViT-SAM",
+  "variant": "L0 (efficientvit_sam_l0.pt, 512px)",
+  "encoder_input": 512,
+  "encode": {
+    "median_ms": 539.436572500108,
+    "mean_ms": 545.9449631665242,
+    "p90_ms": 570.7405539997126,
+    "min_ms": 526.9019440002012
+  },
+  "decode": {
+    "median_ms": 53.00649400032853,
+    "mean_ms": 54.07392840003013,
+    "p90_ms": 57.00803480012837,
+    "min_ms": 50.42198699993605
+  }
+}

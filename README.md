@@ -1,17 +1,20 @@
 # 可提示分割模型调研
 
-把四个可提示分割（promptable segmentation）模型在同一台机器、同一套评测协议下从零跑通并横向对比。
+把八个可提示分割（promptable segmentation）模型在同一台机器、同一套评测协议下从零跑通并横向对比。
 
-| 模型 | 出处 | 年份 | 本仓库状态 |
+| 模型 | 出处 | 年份 | 路线 |
 |---|---|---|---|
-| [FastSAM](fastsam/NOTES.md) | CASIA-IVA-Lab | 2023 | ✅ 跑通，精度+性能全测 |
-| [MobileSAM](mobilesam/NOTES.md) | Kyung Hee University | 2023 | ✅ 跑通，精度+性能全测 |
-| [EdgeSAM](edgesam/NOTES.md) | NTU S-Lab | 2023 / IJCV 2025 | ✅ 跑通，精度+性能全测 |
-| [EfficientSAM3](efficientsam3/NOTES.md) | Bristol / UvA / Edinburgh / SMU | 2025 | ✅ 跑通，精度+性能全测 |
+| [FastSAM](fastsam/NOTES.md) | CASIA-IVA-Lab | 2023 | 换架构：YOLOv8-seg 一次提议全部 mask |
+| [MobileSAM](mobilesam/NOTES.md) | Kyung Hee University | 2023 | 换编码器：TinyViT，解耦蒸馏 |
+| [EdgeSAM](edgesam/NOTES.md) | NTU S-Lab | 2023 / IJCV 2025 | 换编码器 + prompt-in-the-loop 蒸馏（RepViT-M1） |
+| [RepViT-SAM](repvitsam/NOTES.md) | 清华 THU-MIG | 2023 | 同路线更大一档（RepViT-M2.3） |
+| [TinySAM](tinysam/NOTES.md) | 华为诺亚方舟 | AAAI 2025 | 同 TinyViT 同算力，全阶段蒸馏 + 难提示采样 |
+| [EfficientSAM](efficientsam/NOTES.md) | Meta AI | CVPR 2024 | 换训练法：SAMI 掩码图像预训练 |
+| [EfficientViT-SAM](efficientvitsam/NOTES.md) | MIT Han Lab | CVPRW 2024 | **非蒸馏**：EfficientViT + 完整 SA-1B 训练 |
+| [EfficientSAM3](efficientsam3/NOTES.md) | Bristol / UvA / Edinburgh / SMU | 2025 | 压缩的是 **SAM3**：文本/概念提示 + 跟踪 |
 
-四个模型都已完整评测。各模型的 `setup.sh` 会自动拉取权重
-（FastSAM 走 ultralytics 的 GitHub release 资产，MobileSAM 的权重在上游仓库里，
-EdgeSAM 与 EfficientSAM3 走 HuggingFace）。
+八个模型都已完整评测，各自 `setup.sh` 会自动拉取权重
+（GitHub release 资产 / 上游仓库内置 / HuggingFace，视模型而定）。
 
 `bench.py` 是 weights-optional 的：检测不到 `weights/` 下的 checkpoint 时，
 只报**与权重数值无关**的指标（参数量 / GFLOPs / 时延 / 峰值内存），
@@ -37,7 +40,8 @@ EdgeSAM 与 EfficientSAM3 走 HuggingFace）。
 │   ├── metrics.py           mask IoU / boundary IoU / 尺寸分桶
 │   ├── runner.py            ModelAdapter 协议、时延测量、FLOPs、峰值内存
 │   ├── viz.py               mask 可视化
-│   └── demo_common.py       demo 脚本共用逻辑
+│   ├── demo_common.py       demo 脚本共用逻辑
+│   ├── sam_adapter.py       SAM 系预测器的共用适配器
 ├── datasets/                coco128-seg（scripts/get_dataset.sh 拉取，未入库）
 ├── docs/
 ├── scripts/
@@ -66,9 +70,11 @@ EdgeSAM 与 EfficientSAM3 走 HuggingFace）。
 ./scripts/get_dataset.sh
 
 # 2. 逐个安装（clone + 打补丁 + 下权重 + uv sync）
-for m in fastsam mobilesam edgesam efficientsam3; do (cd $m && ./setup.sh); done
+for m in fastsam mobilesam edgesam repvitsam tinysam efficientsam efficientvitsam efficientsam3; do
+  (cd $m && ./setup.sh)
+done
 
-# 3. 跑全部评测（串行，CPU 上约 30 分钟）
+# 3. 跑全部评测（串行，CPU 上约 2 小时）
 ./scripts/run_all.sh
 
 # 4. 汇总
@@ -80,10 +86,10 @@ cd mobilesam && uv run python demo.py
 
 ## 环境
 
-- **Python 3.10**（四个环境统一），uv 管理
-- **torch 2.13.0**（四个环境统一钉同一版本）
-  ——uv 从同一 cache 硬链接落盘，所以四个 venv 只占**一份**物理磁盘，
-  而不是 4 × 5 GB。详见 [EXPERIENCE.md 第 1 节](docs/EXPERIENCE.md)。
+- **Python 3.10**（八个环境统一），uv 管理
+- **torch 2.13.0**（八个环境统一钉同一版本）
+  ——uv 从同一 cache 硬链接落盘，所以八个 venv 只占**一份**物理磁盘，
+  而不是 8 × 5 GB。详见 [EXPERIENCE.md 第 1 节](docs/EXPERIENCE.md)。
 - 纯 CPU（4 核 / 15 GB），无 GPU
 
 > 因此本仓库的时延数字只能用作**模型间的相对排序**，
@@ -108,6 +114,7 @@ cd mobilesam && uv run python demo.py
 
 ## 许可
 
-各模型代码遵循各自上游许可（FastSAM: Apache-2.0；MobileSAM: Apache-2.0；
-EdgeSAM: S-Lab License 1.0；EfficientSAM3: Apache-2.0）。
+各模型代码遵循各自上游许可（FastSAM / MobileSAM / EfficientSAM / EfficientSAM3: Apache-2.0；
+EdgeSAM: S-Lab License 1.0；RepViT-SAM: Apache-2.0；TinySAM: Apache-2.0；
+EfficientViT-SAM: Apache-2.0）。
 本仓库自有的评测与封装代码可自由使用。

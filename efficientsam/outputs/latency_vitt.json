@@ -1,0 +1,17 @@
+{
+  "model": "EfficientSAM",
+  "variant": "Ti (efficient_sam_vitt.pt)",
+  "encoder_input": 1024,
+  "encode": {
+    "median_ms": 3329.0307755005415,
+    "mean_ms": 3362.2237565001947,
+    "p90_ms": 3575.238712999635,
+    "min_ms": 3149.5353070004057
+  },
+  "decode": {
+    "median_ms": 85.41707800031872,
+    "mean_ms": 86.43489284011594,
+    "p90_ms": 94.09494539995649,
+    "min_ms": 80.64130200000363
+  }
+}

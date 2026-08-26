@@ -1,0 +1,51 @@
+{
+  "model": "RepViT-SAM",
+  "variant": "RepViT-M2.3 (repvit_sam.pt)",
+  "n_images": 121,
+  "n_instances": 524,
+  "params_M": {
+    "total": 27.223,
+    "image_encoder": 23.159,
+    "prompt_encoder": 0.006,
+    "mask_decoder": 4.058
+  },
+  "accuracy": {
+    "box_mIoU": 0.7744220871003002,
+    "box_median_IoU": 0.8210500321288435,
+    "box_IoU@0.5": 0.9198473282442748,
+    "box_IoU@0.75": 0.7022900763358778,
+    "box_IoU@0.9": 0.21374045801526717,
+    "box_boundary_mIoU": 0.6698653132946446,
+    "point_mIoU": 0.5663591369511987,
+    "point_median_IoU": 0.609700153721179,
+    "point_IoU@0.5": 0.5954198473282443,
+    "point_IoU@0.75": 0.37786259541984735,
+    "point_IoU@0.9": 0.10305343511450382,
+    "mIoU_medium": 0.7643322846285001,
+    "n_medium": 296,
+    "mIoU_large": 0.7875211289057954,
+    "n_large": 228
+  },
+  "latency": {
+    "encode_median_ms": 2276.978275999909,
+    "encode_mean_ms": 2290.8114375867744,
+    "decode_median_ms": 53.19753599997057,
+    "decode_mean_ms": 54.17571621756135,
+    "images_per_s": 0.439178542255025,
+    "encoder_only_1024": {
+      "median_ms": 2238.463292000006,
+      "mean_ms": 2261.5790908999543,
+      "p90_ms": 2419.4801066998025,
+      "min_ms": 2099.6298360000765
+    }
+  },
+  "peak_rss_mb": 1241.125,
+  "env": {
+    "python": "3.10.20",
+    "platform": "Linux-6.18.44-fc-v21-x86_64-with-glibc2.39",
+    "processor": "x86_64"
+  },
+  "weights_available": true,
+  "encoder_gflops_1024": 226.609223168,
+  "checkpoint_mb": 110.0
+}

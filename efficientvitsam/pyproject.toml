@@ -1,0 +1,30 @@
+[project]
+name = "pbs-efficientvitsam"
+version = "0.1.0"
+description = "EfficientViT-SAM (MIT Han Lab, 2024) - EfficientViT encoder trained on full SA-1B"
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "numpy<2",
+    "torch==2.13.0",
+    "torchvision",
+    "opencv-python-headless>=4.6",
+    "pillow>=9",
+    "matplotlib>=3.5",
+    "timm>=0.9",
+    "einops>=0.7",
+    "huggingface-hub",
+    "omegaconf>=2.3",
+    "scipy>=1.9",
+    "torchprofile",
+    "pycocotools>=2.0.6",
+    # efficientvit.apps.utils.export imports onnx at module scope, and that module
+    # is pulled in transitively by sam_model_zoo -> apps.trainer.
+    "onnx",
+    "onnxsim",
+    # efficientvit/models/efficientvit/sam.py imports segment_anything at module
+    # scope for its SamAutomaticMaskGenerator. Not on PyPI under this name.
+    "segment-anything @ git+https://github.com/facebookresearch/segment-anything.git",
+]
+
+[tool.uv]
+package = false

@@ -1,6 +1,7 @@
 # 调试经验记录
 
-把 FastSAM / MobileSAM / EdgeSAM / EfficientSAM3 四个可提示分割模型在同一台机器上从零跑通的过程记录。
+把八个可提示分割模型在同一台机器上从零跑通的过程记录：
+FastSAM / MobileSAM / EdgeSAM / RepViT-SAM / TinySAM / EfficientSAM / EfficientViT-SAM / EfficientSAM3。
 每一条都是实际踩到并解决掉的，不是照抄 README。
 
 环境：Linux x86_64、**纯 CPU（4 核 / 15 GB 内存）**、Python 3.10、uv。
@@ -48,23 +49,23 @@ curl -sS "$HTTPS_PROXY/__agentproxy/status"     # 会列出最近的 connect_rej
 
 ---
 
-## 1. uv 环境：四个环境，但 torch 只占一份磁盘
+## 1. uv 环境：八个环境，但 torch 只占一份磁盘
 
-四个模型对 torch 的要求本来是冲突的（EdgeSAM 锁 `torch==2.0.0`，EfficientSAM3 要 `>=2.7`），
-所以必须环境隔离。但四份 torch = 20 GB，磁盘只有 30 GB。
+各模型对 torch 的要求本来是冲突的（EdgeSAM 锁 `torch==2.0.0`，EfficientSAM3 要 `>=2.7`），
+所以必须环境隔离。但八份 torch = 40 GB，磁盘只有 30 GB。
 
-**做法：四个环境全部锁同一个 `torch==2.13.0`。**
-uv 默认从同一个 cache 用 **硬链接** 落盘，版本一致时四个 venv 只占一份物理空间。
+**做法：八个环境全部锁同一个 `torch==2.13.0`。**
+uv 默认从同一个 cache 用 **硬链接** 落盘，版本一致时所有 venv 只占一份物理空间。
 
 实测：
 
 ```
 第一个环境 (fastsam)   .venv 5.0 GB，磁盘可用 30G → 25G
 第二个环境 (mobilesam) .venv 5.2 GB，磁盘可用 25G → 25G   ← 几乎不额外占用
-第三、四个环境同理
+后续环境同理：扩到八个环境后，四个新环境总共只多占约 1 GB（各自的独有依赖）。
 ```
 
-所以 **"venv 目录 5 GB × 4" 是假象**，`du` 会把硬链接重复计数，看 `df` 才准。
+所以 **"venv 目录 5 GB × 8" 是假象**，`du` 会把硬链接重复计数，看 `df` 才准。
 
 几个副作用：
 - EdgeSAM 官方 `requirements.txt` 钉 `torch==2.0.0`，实测在 2.13.0 上推理完全正常，那个钉子可以不管。
@@ -85,6 +86,10 @@ uv 默认从同一个 cache 用 **硬链接** 落盘，版本一致时四个 ven
 | MobileSAM | `f706ad9c4eb7f219c00d9050e46328518ffb65d2` |
 | EdgeSAM | `d24d99671f41a9c0003061248bded64a481e9059` |
 | EfficientSAM3 | `bd0936c788fed8d51fa799437f05abd97b401b06` |
+| EfficientSAM | `d525f622e6f640acf5a0fc37c7ca1f243da5bde0` |
+| EfficientViT-SAM | `de7d7733cc0329f391b33f1f459271562ec27bd5` |
+| RepViT-SAM | `298f42075eda5d2e6102559fad260c970769d34e` |
+| TinySAM | `11589bc1d98c16cff046c31d5ad4cd90a30f0897` |
 
 ---
 
@@ -334,6 +339,76 @@ https://github.com/ultralytics/assets/releases/download/v0.0.0/coco128-seg.zip  
 
 ---
 
+## 7.5 时延必须"背靠背"测——这是本次最大的方法论教训
+
+扩到八个模型后，第一版结果里出现了一个说不通的数字：
+**MobileSAM 编码器 905 ms，TinySAM 1196 ms**——可这两个模型的编码器是**逐字节相同**的
+（都是 TinyViT，6.0655M 参数、77.5 GFLOPs、模块类型计数完全一致，实测确认过）。
+同样的架构不可能差 25%。
+
+排查结论：**不是模型差异，是这台共享 4 核机器在不同批次之间的吞吐漂移。**
+两者原本在不同批次里测（MobileSAM 在第一轮，TinySAM 在后来补测的一轮）。
+背靠背连测两遍，结果立刻一致：
+
+```
+MobileSAM  median=1155.5   TinySAM  median=1207.2
+MobileSAM  median=1172.7   TinySAM  median=1191.1
+```
+
+注意 MobileSAM 此时是 ~1160 ms，而它最初那轮测出来是 905 ms——**机器本身慢了约 25%**。
+
+**处理方式**：把时延从精度运行里剥离出来，用 `scripts/run_latency.sh` 在**同一轮不间断的序列**
+里重测全部十个变体，`docs/RESULTS.md` 的时延列只用这一轮的数字。
+精度是确定性的，分批跑没问题；**时延不是**。
+
+两个附带的坑：
+
+1. **不要拿空白图测时延**。最初用 `np.zeros((1024,1024,3))`，结果 FastSAM 的 decode 测出 0.04 ms——
+   因为空白图上它什么都检测不到，`box_prompt` 直接走空结果分支返回了。
+   换成真实图片（`assets/dogs.jpg`）后是 ~3 ms，才是有意义的数字。
+2. **短操作要多测几次**。decode 只有几十毫秒，8 次重复下调度抖动占主导，
+   五个共用同一个 4.06M 解码器的模型测出 46~102 ms 的离散区间。
+   提到 25 次重复后收敛到 48~60 ms，彼此一致——这反过来验证了测量的可信度。
+
+---
+
+## 7.6 权重的 CUDA/CPU 问题是个反复出现的类别
+
+八个模型里**两个**（EdgeSAM、TinySAM）的官方 checkpoint 是从 CUDA 张量存下来的，
+而它们的 `build_sam.py` 都写的是 `torch.load(f)`，没给 `map_location`：
+
+```
+RuntimeError: Attempting to deserialize object on a CUDA device
+but torch.cuda.is_available() is False.
+```
+
+两个都用同样的补丁修（`map_location="cpu"`）。
+
+**这类问题只有真正拿到权重才会暴露**——在只能做"结构级验证"的阶段，
+代码 import 得通、模型建得出来、前向跑得动，看上去完全正常。
+所以"跑通了"这个说法要区分两个层次：**结构跑通 ≠ 权重跑通**。
+
+对照：MobileSAM / RepViT-SAM / EfficientSAM / EfficientViT-SAM / EfficientSAM3 都没有这个问题。
+
+---
+
+## 7.7 新增四个模型各自的坑（详见各目录 NOTES.md）
+
+| 模型 | 坑 | 处理 |
+|---|---|---|
+| **EfficientSAM** | build 包装函数把 checkpoint 路径**硬编码成相对路径**，无参数可传 | 直接调底层 `build_efficient_sam()` 并显式传路径 |
+| **EfficientSAM** | 无 `SamPredictor`；**框= 两个角点 + label `[2,3]`**，README 完全没写 | 见 NOTES；传错不报错，只是 mask 不对 |
+| **EfficientViT-SAM** | monorepo，`sam_model_zoo` 会连带 import 训练/导出模块 | 装 `onnx` / `onnxsim` / `segment-anything`（后者只在 GitHub 上） |
+| **EfficientViT-SAM** | `model.image_size` 是**二元组** `(1024, 512)`，L0/L1/L2 推理是 512² | 取 `[-1]`，否则 FLOPs 和时延都按 1024² 算，直接错 4 倍 |
+| **EfficientViT-SAM** | 预处理走 torchvision，**不接受负 stride** | 共用适配器统一 `np.ascontiguousarray` |
+| **TinySAM** | `predict()` **没有 multimask 参数**，固定返回 3 个候选 | 适配器加 `multimask_kw=None` 模式，按分数挑 |
+| **RepViT-SAM** | SAM 部分在 `repo/sam/` 子目录，registry 名是 `repvit` | `sys.path` 加 `repo/sam` |
+
+一个观察：**八个模型里只有 MobileSAM 和 RepViT-SAM 完全零改动跑通。**
+其余六个都需要源码补丁或非平凡的依赖处理。
+
+---
+
 ## 8. 复现步骤
 
 ```bash
@@ -341,15 +416,17 @@ https://github.com/ultralytics/assets/releases/download/v0.0.0/coco128-seg.zip  
 ./scripts/get_dataset.sh
 
 # 2. 每个模型各自装（会 clone 固定 SHA、打补丁、下权重、uv sync）
-cd fastsam       && ./setup.sh && cd ..
-cd mobilesam     && ./setup.sh && cd ..
-cd edgesam       && ./setup.sh && cd ..
-cd efficientsam3 && ./setup.sh && cd ..
+for m in fastsam mobilesam edgesam repvitsam tinysam efficientsam efficientvitsam efficientsam3; do
+  (cd $m && ./setup.sh)
+done
 
-# 3. 跑全部评测（串行，CPU 上约 30 分钟）
+# 3. 精度评测（串行，CPU 上约 2 小时）
 ./scripts/run_all.sh
 
-# 4. 汇总成 docs/RESULTS.md
+# 4. 时延单独一轮背靠背测（约 15 分钟）——见 7.5 节，这一步不能省
+./scripts/run_latency.sh
+
+# 5. 汇总成 docs/RESULTS.md
 python3 scripts/aggregate.py
 ```
 

@@ -1,0 +1,17 @@
+{
+  "model": "EfficientSAM3",
+  "variant": "TV-M (tinyvit/11m, efficientsam3_tinyvit.pt)",
+  "encoder_input": 1008,
+  "encode": {
+    "median_ms": 2868.2781390002674,
+    "mean_ms": 3080.672056500134,
+    "p90_ms": 4173.936028999833,
+    "min_ms": 2118.715822000013
+  },
+  "decode": {
+    "median_ms": 2234.5928649992857,
+    "mean_ms": 2309.8192098399886,
+    "p90_ms": 2498.8618125998987,
+    "min_ms": 2081.401277000623
+  }
+}

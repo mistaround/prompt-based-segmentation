@@ -23,4 +23,9 @@ run edgesam   "EdgeSAM (RepViT-M1)"
 # EfficientSAM3 runs the full set like the others. Its decoder is ~40x slower
 # per prompt than the SAM-style models, so this stage dominates the wall clock.
 run efficientsam3 "EfficientSAM3 TV-M"     --backbone tinyvit
+run efficientsam    "EfficientSAM-Ti"       --variant vitt
+run efficientsam    "EfficientSAM-S"        --variant vits
+run efficientvitsam "EfficientViT-SAM-L0"   --model efficientvit-sam-l0
+run repvitsam       "RepViT-SAM"
+run tinysam         "TinySAM"
 echo "All runs complete."
